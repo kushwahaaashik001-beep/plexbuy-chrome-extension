@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "PlexBuy AI Shopping Helper",
+  "version": "1.0",
+  "description": "Amazon aur Flipkart par turant AI analysis aur best deals paayein. Developed by PlexBuy AI.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.amazon.in/*", "*://*.flipkart.com/*"],
+      "css": ["extension.css"], 
+      "js": ["content.js"]
+    }
+  ],
+  /* Host Permissions: Yeh aapka Vercel backend URL hai jahan se AI data aayega */
+  "host_permissions": [
+    "*://*.amazon.in/*",
+    "*://*.flipkart.com/*",
+    "https://plexbuy-final-fix.vercel.app/*" 
+  ],
+  "permissions": [
+    "activeTab"
+  ]
+}

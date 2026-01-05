@@ -1,0 +1,84 @@
+/* extension.css */
+
+.plexbuy-ai-box {
+    /* Fixed position for visibility on product pages */
+    position: fixed;
+    top: 60px; /* Thoda niche taaki browser toolbar se na takraye */
+    right: 20px;
+    width: 320px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    z-index: 9999999; /* Highest Z-index to cover all website elements */
+    transition: all 0.3s ease-in-out;
+}
+
+.plexbuy-ai-box h4 {
+    color: #007bff;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plexbuy-ai-box h4 i {
+    font-size: 20px;
+}
+
+.plexbuy-ai-box p {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+/* Loading State Styling */
+.plexbuy-loading {
+    color: #007bff;
+    font-weight: 500;
+}
+.plexbuy-loading i {
+    margin-right: 5px;
+}
+
+/* Error State Styling */
+.plexbuy-error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Call to Action Button */
+.plexbuy-cta {
+    display: block;
+    background: linear-gradient(135deg, #ff6600, #cc5200);
+    color: white !important;
+    text-align: center;
+    padding: 12px 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 15px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3);
+}
+
+.plexbuy-cta:hover {
+    background: linear-gradient(135deg, #cc5200, #994000);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 102, 0, 0.4);
+}
+
+.plexbuy-note {
+    font-size: 11px;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 10px;
+    font-style: italic;
+}

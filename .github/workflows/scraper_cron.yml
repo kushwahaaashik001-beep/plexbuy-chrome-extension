@@ -1,35 +1,313 @@
-name: Lead Sniper Cron
+name: 🚀 OPTIMA Enterprise Scraper
+run-name: "💰 Premium Lead Hunting - ${{ github.event_name }}"
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Har 15 minute mein chalega
-  workflow_dispatch: # Manual button ke liye
+    # Har 15 minute mein (PRODUCTION)
+    - cron: '*/15 * * * *'
+    # Roz subah 8 baje (WHALE HUNTING)
+    - cron: '0 8 * * *'
+    # Roz shaam 8 baje (URGENT LEADS)
+    - cron: '0 20 * * *'
+  
+  # Manual trigger button
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Specific Category (Optional)'
+        required: false
+        default: 'all'
+      mode:
+        description: 'Scraping Mode'
+        required: false
+        default: 'normal'
+        type: choice
+        options:
+        - normal
+        - aggressive
+        - whale-only
+
+# Environment Variables Setup
+env:
+  PYTHON_VERSION: '3.10'
+  TZ: 'Asia/Kolkata'
 
 jobs:
-  build:
+  optima-premium-scraper:
+    name: "🐳 OPTIMA Whale Hunter v3.1"
     runs-on: ubuntu-latest
+    
+    # Timeout: 20 minutes (scraper can run long)
+    timeout-minutes: 20
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      # Step 1: Code Checkout
+      - name: "📦 Checkout Code"
+        uses: actions/checkout@v4
         with:
-          python-version: '3.9'
-
-      - name: Install ALL Dependencies
+          fetch-depth: 0
+          
+      # Step 2: Python Setup
+      - name: "🐍 Setup Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          
+      # Step 3: Install ALL Dependencies (One-shot solution)
+      - name: "🔧 Install All Premium Dependencies"
         run: |
-          python -m pip install --upgrade pip
-          # Yahan maine wo saari libraries likh di hain jo missing thi (bs4, requests, etc.)
-          pip install beautifulsoup4 requests fake_useragent duckduckgo_search supabase groq python-dotenv lxml
-
-      - name: Run Scraper
+          # Update pip and setuptools first
+          python -m pip install --upgrade pip setuptools wheel
+          
+          # Install ALL required packages in ONE command
+          pip install \
+            duckduckgo-search>=6.0.0 \
+            groq>=0.9.0 \
+            supabase>=2.3.0 \
+            requests>=2.31.0 \
+            fake-useragent>=1.4.0 \
+            beautifulsoup4>=4.12.0 \
+            lxml>=4.9.0 \
+            aiohttp>=3.9.0 \
+            backoff>=2.2.0 \
+            python-dateutil>=2.8.0 \
+            PyYAML>=6.0 \
+            ujson>=5.8.0 \
+            tenacity>=8.2.0 \
+            ratelimit>=2.2.1 \
+            tqdm>=4.66.0
+          
+          # Verify installations
+          echo "✅ Installed Packages:"
+          pip list | grep -E "(duckduckgo|groq|supabase|bs4|aiohttp)"
+          
+      # Step 4: Validate Environment
+      - name: "🔍 Validate Environment"
+        run: |
+          echo "📋 Checking Python..."
+          python --version
+          
+          echo "📋 Checking critical modules..."
+          python -c "
+          try:
+              import duckduckgo_search
+              import groq
+              import supabase
+              import requests
+              from bs4 import BeautifulSoup
+              import aiohttp
+              print('✅ All critical imports successful')
+          except ImportError as e:
+              print(f'❌ Import error: {e}')
+              exit(1)
+          "
+          
+      # Step 5: Create requirements.txt if not exists
+      - name: "📝 Create Requirements File"
+        run: |
+          if [ ! -f "requirements.txt" ]; then
+            cat > requirements.txt << 'EOF'
+          # OPTIMA Enterprise Scraper v3.1 - Premium Dependencies
+          duckduckgo-search>=6.0.0
+          groq>=0.9.0
+          supabase>=2.3.0
+          requests>=2.31.0
+          fake-useragent>=1.4.0
+          beautifulsoup4>=4.12.0
+          lxml>=4.9.0
+          aiohttp>=3.9.0
+          backoff>=2.2.0
+          python-dateutil>=2.8.0
+          PyYAML>=6.0
+          ujson>=5.8.0
+          tenacity>=8.2.0
+          ratelimit>=2.2.1
+          tqdm>=4.66.0
+          EOF
+            echo "✅ Created requirements.txt"
+          else
+            echo "✅ requirements.txt already exists"
+          fi
+          
+      # Step 6: Find and Validate Scraper
+      - name: "🔎 Locate Scraper Script"
+        id: find-scraper
+        run: |
+          # Find all Python scraper files
+          echo "🔍 Searching for scraper files..."
+          find . -name "*.py" -type f | grep -i scraper || true
+          
+          # Check specifically for scraper.py
+          if [ -f "scraper.py" ]; then
+            echo "✅ Found: scraper.py in root"
+            echo "SCRAPER_PATH=./scraper.py" >> $GITHUB_OUTPUT
+          elif [ -f "backend-Optima/scraper.py" ]; then
+            echo "✅ Found: backend-Optima/scraper.py"
+            echo "SCRAPER_PATH=./backend-Optima/scraper.py" >> $GITHUB_OUTPUT
+          else
+            # Use find command
+            SCRAPER_FILE=$(find . -name "scraper.py" -type f -print -quit 2>/dev/null || true)
+            if [ -n "$SCRAPER_FILE" ] && [ -f "$SCRAPER_FILE" ]; then
+              echo "✅ Found: $SCRAPER_FILE"
+              echo "SCRAPER_PATH=$SCRAPER_FILE" >> $GITHUB_OUTPUT
+            else
+              echo "❌ ERROR: scraper.py not found!"
+              echo "🔍 Listing all Python files:"
+              find . -name "*.py" -type f | head -20
+              exit 1
+            fi
+          fi
+          
+      # Step 7: Validate Scraper Syntax
+      - name: "📝 Validate Scraper Code"
+        run: |
+          SCRAPER_PATH="${{ steps.find-scraper.outputs.SCRAPER_PATH }}"
+          echo "📋 Validating: $SCRAPER_PATH"
+          
+          # Check Python syntax
+          python -m py_compile "$SCRAPER_PATH"
+          
+          # Check for imports
+          echo "📋 Checking imports..."
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          try:
+              exec(open('$SCRAPER_PATH').read())
+              print('✅ Scraper imports are valid')
+          except Exception as e:
+              print(f'❌ Error in scraper: {e}')
+              sys.exit(1)
+          "
+          
+      # Step 8: Run OPTIMA Scraper (MAIN ACTION)
+      - name: "🚀 Run OPTIMA Enterprise Scraper"
         env:
+          # SECRETS - GitHub Secrets se load honge
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        # Smart Search: File kahin bhi ho, ye dhoondh kar chala dega
+          
+          # OPTIONAL CONFIG
+          SCRAPER_MODE: ${{ github.event.inputs.mode || 'normal' }}
+          TARGET_CATEGORY: ${{ github.event.inputs.category || 'all' }}
+          
+          # Performance settings
+          PYTHONUNBUFFERED: "1"
+          PYTHONPATH: "."
+          
         run: |
-          SCRAPER_PATH=$(find . -name "scraper.py" -print -quit)
-          echo "Found Scraper at: $SCRAPER_PATH"
-          python "$SCRAPER_PATH"
+          SCRAPER_PATH="${{ steps.find-scraper.outputs.SCRAPER_PATH }}"
+          
+          echo "========================================"
+          echo "🚀 STARTING OPTIMA ENTERPRISE SCRAPER"
+          echo "========================================"
+          echo "📅 Time: $(date)"
+          echo "💾 Scraper: $SCRAPER_PATH"
+          echo "🔧 Mode: $SCRAPER_MODE"
+          echo "📁 Category: $TARGET_CATEGORY"
+          echo "========================================"
+          
+          # Run the scraper with proper error handling
+          set +e  # Don't exit immediately on error
+          
+          # Calculate timeout (15 minutes for normal, 20 for aggressive)
+          if [ "$SCRAPER_MODE" = "aggressive" ]; then
+            TIMEOUT=1200  # 20 minutes
+          else
+            TIMEOUT=900   # 15 minutes
+          fi
+          
+          # Run scraper with timeout
+          timeout $TIMEOUT python "$SCRAPER_PATH" 2>&1 | tee scraper_output.log
+          
+          SCRAPER_EXIT_CODE=${PIPESTATUS[0]}
+          
+          echo "========================================"
+          echo "📊 SCRAPER COMPLETED - Exit Code: $SCRAPER_EXIT_CODE"
+          echo "========================================"
+          
+          # Check output
+          if [ -f "scraper_output.log" ]; then
+            echo "📄 Last 50 lines of output:"
+            tail -50 scraper_output.log
+            
+            # Check for success indicators
+            if grep -q "ENTERPRISE SCRAPING COMPLETE" scraper_output.log; then
+              echo "✅ SUCCESS: Scraper completed successfully"
+              
+              # Extract stats
+              echo "📊 STATISTICS:"
+              grep -E "(Total Leads|Whales Found|Leads Saved|Errors|Hot Leads)" scraper_output.log | head -10
+              
+              # Check for whales
+              WHALES_COUNT=$(grep -o "Whales Found: [0-9]*" scraper_output.log | grep -o "[0-9]*" || echo "0")
+              if [ "$WHALES_COUNT" -gt "0" ]; then
+                echo "🎉 WHALE ALERT: Found $WHALES_COUNT whales!"
+              fi
+              
+            elif grep -q "KeyboardInterrupt" scraper_output.log; then
+              echo "⚠️ WARNING: Scraper was interrupted (timeout?)"
+            elif grep -q "CRITICAL ERROR" scraper_output.log; then
+              echo "❌ ERROR: Scraper encountered critical error"
+              cat scraper_output.log | grep -A5 "CRITICAL ERROR"
+              exit 1
+            else
+              echo "ℹ️ INFO: Scraper output doesn't contain completion message"
+            fi
+          fi
+          
+          # Exit based on scraper exit code
+          if [ $SCRAPER_EXIT_CODE -eq 0 ]; then
+            echo "✅ SCRAPER SUCCESS"
+          elif [ $SCRAPER_EXIT_CODE -eq 124 ]; then
+            echo "⏰ SCRAPER TIMEOUT - Normal for aggressive mode"
+          else
+            echo "❌ SCRAPER FAILED with code: $SCRAPER_EXIT_CODE"
+            exit $SCRAPER_EXIT_CODE
+          fi
+          
+      # Step 9: Upload Logs for Debugging
+      - name: "📤 Upload Scraper Logs"
+        if: always()  # Always run even if previous steps fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-logs-${{ github.run_id }}
+          path: |
+            scraper_output.log
+            optima_scraper.log
+          retention-days: 7
+          
+      # Step 10: Success Notification
+      - name: "✅ Scraping Complete"
+        if: success()
+        run: |
+          echo "========================================"
+          echo "🎉 OPTIMA SCRAPING WORKFLOW SUCCESS!"
+          echo "========================================"
+          echo "💰 Premium leads have been collected"
+          echo "🐋 Whales are marked in Supabase"
+          echo "🔥 Check dashboard for hot leads"
+          echo "🕒 Next run: 15 minutes"
+          echo "========================================"
+          
+      # Step 11: Failure Notification
+      - name: "❌ Workflow Failed"
+        if: failure()
+        run: |
+          echo "========================================"
+          echo "❌ OPTIMA SCRAPING WORKFLOW FAILED!"
+          echo "========================================"
+          echo "Check the logs above for details"
+          echo "Common issues:"
+          echo "1. Missing API keys in GitHub Secrets"
+          echo "2. Supabase connection issues"
+          echo "3. Groq API rate limits"
+          echo "4. Python dependency issues"
+          echo "========================================"

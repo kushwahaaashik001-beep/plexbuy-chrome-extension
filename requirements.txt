@@ -1,4 +1,10 @@
+beautifulsoup4
+requests
+fake_useragent
 duckduckgo_search
 supabase
+groq
 python-dotenv
-fake_useragent
+lxml
+aiohttp
+aiosignal

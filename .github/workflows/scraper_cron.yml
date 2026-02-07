@@ -2,8 +2,8 @@ name: Lead Sniper Cron
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Har 15 minute mein chalega
-  workflow_dispatch: # Manual button ke liye
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -27,5 +27,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        # Direct path use kar rahe hain bina working-directory ke jhamela ke
-        run: python backend-Optima/scraper.py
+        # Yeh command file ko poori repository mein dhoond kar chalayega
+        run: |
+          SCRAPER_PATH=$(find . -name "scraper.py" -print -quit)
+          python "$SCRAPER_PATH"
